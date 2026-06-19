@@ -12,7 +12,7 @@ class UsuarioService
         Console.Write("Digite um nome: ");
         string nomeUsuario = Console.ReadLine()!;
 
-        if (!string.IsNullOrWhiteSpace(nomeUsuario))
+        if (string.IsNullOrWhiteSpace(nomeUsuario))
         {
             Console.WriteLine("Nome inválido!");
             return;
@@ -41,6 +41,7 @@ class UsuarioService
 
             Console.WriteLine("✅ Usuário adicionado com sucesso!");
 
+            // for each no "usuarios" devido que o List<"Usuario"> pega as props de Usuario.cs, consequentemente capturamos os values da lista 
             foreach (var u in usuarios)
             {
                 Console.WriteLine($"Nome: {u.Nome} | Idade: {u.Idade} | E-mail: {u.Email} | Data de Cadastro: {u.DataCadastro}");
@@ -52,7 +53,7 @@ class UsuarioService
         }
     }
 
-    public void AlterarUsuario()
+    public void AlterarUsuario(List<Usuario> usuarios)
     {
         
     }
