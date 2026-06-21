@@ -137,11 +137,11 @@ class UsuarioService
             string json = File.ReadAllText(arquivo);
             var dadosJson = JsonSerializer.Deserialize<List<Usuario>>(json);
 
-            if(dadosJson != null)
+            if (dadosJson != null)
             {
-                foreach(var j in dadosJson)
+                foreach (var j in dadosJson)
                 {
-                    Console.WriteLine($"Nome: {j.Nome} | Idade? {j.Idade} | E-mail: {j.Email} | Data de Cadastro: {j.DataCadastro}");
+                    Console.WriteLine($"Nome: {j.Nome} | Idade: {j.Idade} | E-mail: {j.Email} | Data de Cadastro: {j.DataCadastro}");
                 }
             }
             else
@@ -153,6 +153,57 @@ class UsuarioService
 
     public void ExcluirUsuario(List<Usuario> usuarios)
     {
+        string json = File.ReadAllText(arquivo);
+        var dadosJson = JsonSerializer.Deserialize<List<Usuario>>(json) ?? [];
+        // para manter que o usuarios vai refletir apenas dados atuais, sem manter dados duplicados ou desatualizados, o usuarios é limpado e usado o addrange para copiar os usuarios do arquivo para a list
+        usuarios.Clear();
+        usuarios.AddRange(dadosJson);
 
+        bool validacao = true;
+        while (validacao)
+        {
+            if (dadosJson.Count > 0)
+            {
+                for (var y = 0; y < dadosJson.Count; y++)
+                {
+                    Console.WriteLine($"{y + 1} - {dadosJson[y].Nome}");
+                }
+
+                Console.WriteLine("Qual usuário você deseja remover (número)?");
+                string numeroEscolhido = Console.ReadLine()!;
+                int.TryParse(numeroEscolhido, out int numeroEscolhidoCast);
+
+                int indice = numeroEscolhidoCast - 1;
+
+                if (numeroEscolhidoCast >= 1 && numeroEscolhidoCast <= usuarios.Count)
+                {
+                    try
+                    {
+                        usuarios.RemoveAt(indice);
+
+                        string salvaNovoJson = JsonSerializer.Serialize(usuarios, new JsonSerializerOptions { WriteIndented = true });
+                        File.WriteAllText(arquivo, salvaNovoJson);
+
+                        Console.WriteLine("✅ Usuário excluído com sucesso!");
+
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        Console.WriteLine("❌ Usuário inexistente.");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("❌ Selecione um usuário correto.");
+                }
+
+                validacao = false;
+            }
+            else
+            {
+                Console.WriteLine("Nenhum usuário encontrado.");
+                validacao = false;
+            }
+        }
     }
 }
