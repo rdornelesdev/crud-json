@@ -93,7 +93,7 @@ class UsuarioService
                     string alteracaoEmail = Console.ReadLine()!;
                     var validacaoEmail = new EmailAddressAttribute();
 
-                    if(!string.IsNullOrWhiteSpace(nomeFormat) && nomeFormat.All(char.IsLetter) && idadeCast > 1 && validacaoEmail.IsValid(alteracaoEmail))
+                    if (!string.IsNullOrWhiteSpace(nomeFormat) && nomeFormat.All(char.IsLetter) && idadeCast > 1 && validacaoEmail.IsValid(alteracaoEmail))
                     {
                         // altera os dados
                         dadosJson[indice].Nome = nomeFormat;
@@ -128,7 +128,27 @@ class UsuarioService
 
     public void ListarUsuarios(List<Usuario> usuarios)
     {
+        Console.WriteLine("----------");
+        Console.WriteLine("Usuários");
+        Console.WriteLine("----------");
 
+        if (File.Exists(arquivo))
+        {
+            string json = File.ReadAllText(arquivo);
+            var dadosJson = JsonSerializer.Deserialize<List<Usuario>>(json);
+
+            if(dadosJson != null)
+            {
+                foreach(var j in dadosJson)
+                {
+                    Console.WriteLine($"Nome: {j.Nome} | Idade? {j.Idade} | E-mail: {j.Email} | Data de Cadastro: {j.DataCadastro}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("❌ Nenhum usuário encontrado.");
+            }
+        }
     }
 
     public void ExcluirUsuario(List<Usuario> usuarios)
