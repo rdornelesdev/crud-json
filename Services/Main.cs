@@ -1,9 +1,15 @@
+using UsuarioModel;
+
 namespace main;
 
 class Main
 {
+
+
     public void MainFnc()
     {
+        List<Usuario> usuario = new();
+
         bool validacao = true;
         while (validacao)
         {
@@ -27,37 +33,36 @@ class Main
                 case 1:
                     Console.Clear();
                     UsuarioService add = new();
-                    add.AdicionarUsuario();
+                    add.AdicionarUsuario(usuario);
                     break;
-                
+
                 case 2:
                     Console.Clear();
                     UsuarioService alt = new();
-                    alt.AlterarUsuario();
+                    alt.AlterarUsuario(usuario);
                     break;
-                
+
                 case 3:
                     Console.Clear();
                     UsuarioService list = new();
-                    list.ListarUsuarios();
+                    list.ListarUsuarios(usuario);
                     break;
 
                 case 4:
                     Console.Clear();
                     UsuarioService del = new();
-                    del.ExcluirUsuario();
+                    del.ExcluirUsuario(usuario);
                     break;
-                
+
                 case 5:
                     Console.WriteLine("Saindo...");
                     validacao = false;
                     break;
-                
+
                 default:
                     Console.WriteLine("Opção inválida. Selecione uma opção válida!");
                     break;
             }
-
         }
     }
 }
