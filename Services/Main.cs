@@ -38,14 +38,14 @@ class Main
 
                 case 2:
                     Console.Clear();
-                    UsuarioService alt = new();
-                    alt.AlterarUsuario(usuario);
+                    UsuarioService list = new();
+                    list.ListarUsuarios(usuario);
                     break;
 
                 case 3:
                     Console.Clear();
-                    UsuarioService list = new();
-                    list.ListarUsuarios(usuario);
+                    UsuarioService alt = new();
+                    alt.AlterarUsuario(usuario);
                     break;
 
                 case 4:
