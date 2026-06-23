@@ -71,7 +71,7 @@ class UsuarioService
                     Console.WriteLine($"{i + 1} - {dadosJson[i].Nome} | {dadosJson[i].Idade} | {dadosJson[i].Email}");
                 }
 
-                Console.Write("Qual número deseja alterar?");
+                Console.Write("Qual número deseja alterar? ");
                 string selecao = Console.ReadLine()!;
 
                 if (int.TryParse(selecao, out int selecaoCast) && selecaoCast >= 1 && selecaoCast <= dadosJson.Count)
@@ -82,18 +82,45 @@ class UsuarioService
                     Console.WriteLine($"Você selecionou: {dadosJson[indice].Nome} | {dadosJson[indice].Idade} | {dadosJson[indice].Email}");
 
                     Console.Write("Nome: ");
-                    string alteracaoNome = Console.ReadLine()!;
-                    string nomeFormat = char.ToUpper(alteracaoNome[0]) + alteracaoNome.Substring(1).ToLower();
+                    string alteracaoNome = Console.ReadLine() ?? string.Empty;
+                    string nomeFormat;
+
+                    // quando eu entrar novamente para mexer, devo lembrar de comitar isso, foi uma correção para quando o usuario apenas aperte enter, com isso ele mantém o mesmo nome ja salvo e prossegue. Também devo aplicar nos outros campos
+                    if (string.IsNullOrWhiteSpace(alteracaoNome))
+                    {
+                        nomeFormat = dadosJson[indice].Nome ?? string.Empty;
+                    }
+                    else
+                    {
+                        nomeFormat = char.ToUpper(alteracaoNome[0]) + alteracaoNome.Substring(1).ToLower();
+                    }
 
                     Console.Write("Idade: ");
                     string alteracaoIdade = Console.ReadLine()!;
                     int.TryParse(alteracaoIdade, out int idadeCast);
 
+                    if (string.IsNullOrWhiteSpace(alteracaoIdade))
+                    {
+                        idadeCast = dadosJson[indice].Idade;
+                    }
+
                     Console.Write("Email: ");
                     string alteracaoEmail = Console.ReadLine()!;
                     var validacaoEmail = new EmailAddressAttribute();
 
-                    if (!string.IsNullOrWhiteSpace(nomeFormat) && nomeFormat.All(char.IsLetter) && idadeCast > 1 && validacaoEmail.IsValid(alteracaoEmail))
+                    if(string.IsNullOrWhiteSpace(alteracaoEmail))
+                    {
+                        alteracaoEmail = dadosJson[indice].Email ?? string.Empty;
+                    }
+
+                    // if(string.IsNullOrWhiteSpace(alteracaoNome) && string.IsNullOrWhiteSpace(alteracaoIdade) && string.IsNullOrWhiteSpace(alteracaoEmail))
+                    // {
+                    //     Console.WriteLine("Nenhum campo foi alterado.");
+                    //     validation = false;
+                    // }
+
+
+                    if (!string.IsNullOrWhiteSpace(nomeFormat) && nomeFormat.All(char.IsLetter) || idadeCast >= 1 && idadeCast <= 120 || validacaoEmail.IsValid(alteracaoEmail))
                     {
                         // altera os dados
                         dadosJson[indice].Nome = nomeFormat;
