@@ -1,11 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
+using caminhoArquivo;
 using UsuarioModel;
 
-class UsuarioService
+class UsuarioService : Caminho
 {
-    public string arquivo = "Data/usuarios.json";
-
     public void AdicionarUsuario(List<Usuario> usuarios)
     {
         // Na criação vai gerar o ID e a data de cadastro de forma automática.
@@ -35,7 +34,7 @@ class UsuarioService
 
             // adiciona no usuarios.json
             string jsonAtualizado = JsonSerializer.Serialize(usuarios, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(arquivo, jsonAtualizado);
+            File.WriteAllText(usuariosJson, jsonAtualizado);
 
             Console.Clear();
 
@@ -56,7 +55,7 @@ class UsuarioService
     public void AlterarUsuario(List<Usuario> usuarios)
     {
         // lê o json 
-        string json = File.ReadAllText(arquivo);
+        string json = File.ReadAllText(usuariosJson);
         // deserializa o json no formato do List<Usuario>
         var dadosJson = JsonSerializer.Deserialize<List<Usuario>>(json) ?? [];
 
@@ -130,7 +129,7 @@ class UsuarioService
 
                         // salva a lista atualizada no usuarios.json
                         string novoJson = JsonSerializer.Serialize(dadosJson, new JsonSerializerOptions { WriteIndented = true });
-                        File.WriteAllText(arquivo, novoJson);
+                        File.WriteAllText(usuariosJson, novoJson);
 
                         Console.WriteLine("✅ Nome alterado e salvo com sucesso!");
                         validation = false;
@@ -159,9 +158,9 @@ class UsuarioService
         Console.WriteLine("Usuários");
         Console.WriteLine("----------");
 
-        if (File.Exists(arquivo))
+        if (File.Exists(usuariosJson))
         {
-            string json = File.ReadAllText(arquivo);
+            string json = File.ReadAllText(usuariosJson);
             var dadosJson = JsonSerializer.Deserialize<List<Usuario>>(json);
 
             if (dadosJson != null)
@@ -180,9 +179,9 @@ class UsuarioService
 
     public void ExcluirUsuario(List<Usuario> usuarios)
     {
-        string json = File.ReadAllText(arquivo);
+        string json = File.ReadAllText(usuariosJson);
         var dadosJson = JsonSerializer.Deserialize<List<Usuario>>(json) ?? [];
-        // para manter que o usuarios vai refletir apenas dados atuais, sem manter dados duplicados ou desatualizados, o usuarios é limpado e usado o addrange para copiar os usuarios do arquivo para a list
+        // para manter que o usuarios vai refletir apenas dados atuais, sem manter dados duplicados ou desatualizados, o usuarios é limpado e usado o addrange para copiar os usuarios do usuariosJson para a list
         usuarios.Clear();
         usuarios.AddRange(dadosJson);
 
@@ -209,7 +208,7 @@ class UsuarioService
                         usuarios.RemoveAt(indice);
 
                         string salvaNovoJson = JsonSerializer.Serialize(usuarios, new JsonSerializerOptions { WriteIndented = true });
-                        File.WriteAllText(arquivo, salvaNovoJson);
+                        File.WriteAllText(usuariosJson, salvaNovoJson);
 
                         Console.WriteLine("✅ Usuário excluído com sucesso!");
 
