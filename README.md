@@ -35,11 +35,4 @@ Se você não quer instalar o .NET na sua máquina, pode rodar o projeto usando 
    ```
 
 ---
-
-## 💡 Como Usar
-1. **Execução:** Siga as instruções interativas após rodar o comando `dotnet run`.
-2. **Autenticação:** O fluxo de login é gerenciado pelo `AuthService`.
-3. **Dados:** Os usuários são gravados automaticamente na pasta `Data/` em formato JSON.
-
----
 *Projeto desenvolvido para fins de aprendizado.*
