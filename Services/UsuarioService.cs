@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
+using System.Globalization;
 using System.Text.Json;
 using caminhoArquivo;
 using UsuarioModel;
@@ -7,15 +9,20 @@ class UsuarioService : Caminho
 {
     public void AdicionarUsuario(List<Usuario> usuarios)
     {
+        // carrega dados atuais do arquivo
+        List<Usuario> dadosJson = new();
+        if (File.Exists(usuariosJson))
+        {
+            string existente = File.ReadAllText(usuariosJson);
+            dadosJson = JsonSerializer.Deserialize<List<Usuario>>(existente) ?? new();
+        }
+
         // Na criação vai gerar o ID e a data de cadastro de forma automática.
         Console.Write("Digite um nome: ");
         string nomeUsuario = Console.ReadLine()!;
 
-        if (string.IsNullOrWhiteSpace(nomeUsuario))
-        {
-            Console.WriteLine("Nome inválido!");
-            return;
-        }
+        // Coloca a primeira letra de cada palavra em maiúscula
+        string nomeFormat = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(nomeUsuario.Trim().ToLower());
 
         Console.Write("Digite a idade: ");
         string idade = Console.ReadLine()!;
@@ -25,23 +32,25 @@ class UsuarioService : Caminho
         string email = Console.ReadLine()!;
         var validarEmail = new EmailAddressAttribute();
 
-        string nomeFormat = char.ToUpper(nomeUsuario[0]) + nomeUsuario.Substring(1).ToLower();
+        bool condNome = !string.IsNullOrWhiteSpace(nomeFormat) && Regex.IsMatch(nomeFormat, @"^[a-zA-ZÀ-ÿ\s]+$");
+        bool condIdade = idadeCast > 0 && idadeCast < 120;
+        bool condEmail = validarEmail.IsValid(email);
 
-        if (!string.IsNullOrWhiteSpace(nomeUsuario) && nomeFormat.All(char.IsLetter) && idadeCast > 0 && idadeCast < 120 && !string.IsNullOrWhiteSpace(email) && validarEmail.IsValid(email))
+        if (condNome && condIdade && condEmail)
         {
-            // adiciona no array (memória)
-            usuarios.Add(new Usuario { Id = Guid.NewGuid(), Nome = nomeFormat, Idade = idadeCast, Email = email, DataCadastro = DateTime.Now });
+            var novo = new Usuario { Id = Guid.NewGuid(), Nome = nomeFormat, Idade = idadeCast, Email = email, DataCadastro = DateTime.Now };
+            dadosJson.Add(novo);
 
-            // adiciona no usuarios.json
-            string jsonAtualizado = JsonSerializer.Serialize(usuarios, new JsonSerializerOptions { WriteIndented = true });
+            string jsonAtualizado = JsonSerializer.Serialize(dadosJson, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(usuariosJson, jsonAtualizado);
 
-            Console.Clear();
+            usuarios.Clear();
+            usuarios.AddRange(dadosJson);
 
+            Console.Clear();
             Console.WriteLine("✅ Usuário adicionado com sucesso!");
 
-            // for each no "usuarios" devido que o List<"Usuario"> pega as props de Usuario.cs, consequentemente capturamos os values da lista 
-            foreach (var u in usuarios)
+            foreach (var u in dadosJson)
             {
                 Console.WriteLine($"Nome: {u.Nome} | Idade: {u.Idade} | E-mail: {u.Email} | Data de Cadastro: {u.DataCadastro}");
             }
@@ -54,101 +63,88 @@ class UsuarioService : Caminho
 
     public void AlterarUsuario(List<Usuario> usuarios)
     {
-        // lê o json 
-        string json = File.ReadAllText(usuariosJson);
-        // deserializa o json no formato do List<Usuario>
-        var dadosJson = JsonSerializer.Deserialize<List<Usuario>>(json) ?? [];
-
-        bool validation = true;
-        while (validation)
+        // lê o json (com checagem)
+        List<Usuario> dadosJson = new List<Usuario>();
+        if (File.Exists(usuariosJson))
         {
-            if (dadosJson.Count > 0)
-            {
-                // exibe os usuários de forma númerada
-                for (int i = 0; i < dadosJson.Count; i++)
-                {
-                    Console.WriteLine($"{i + 1} - {dadosJson[i].Nome} | {dadosJson[i].Idade} | {dadosJson[i].Email}");
-                }
+            string json = File.ReadAllText(usuariosJson);
+            dadosJson = JsonSerializer.Deserialize<List<Usuario>>(json) ?? new List<Usuario>();
+        }
 
-                Console.Write("Qual número deseja alterar? ");
-                string selecao = Console.ReadLine()!;
+        if (dadosJson.Count == 0)
+        {
+            Console.WriteLine("Nenhum usuário encontrado.");
+            return;
+        }
 
-                if (int.TryParse(selecao, out int selecaoCast) && selecaoCast >= 1 && selecaoCast <= dadosJson.Count)
-                {
-                    Console.Clear();
+        // exibe e seleciona
+        for (int i = 0; i < dadosJson.Count; i++)
+            Console.WriteLine($"{i + 1} - {dadosJson[i].Nome} | {dadosJson[i].Idade} | {dadosJson[i].Email}");
 
-                    int indice = selecaoCast - 1;
-                    Console.WriteLine($"Você selecionou: {dadosJson[indice].Nome} | {dadosJson[indice].Idade} | {dadosJson[indice].Email}");
+        Console.Write("Qual número deseja alterar? ");
+        string selecao = Console.ReadLine()!;
+        if (!int.TryParse(selecao, out int selecaoCast) || selecaoCast < 1 || selecaoCast > dadosJson.Count)
+        {
+            Console.WriteLine("❌ Seleção inválida. Tente novamente");
+            return;
+        }
 
-                    Console.Write("Nome: ");
-                    string alteracaoNome = Console.ReadLine() ?? string.Empty;
-                    string nomeFormat;
+        int indice = selecaoCast - 1;
 
-                    // quando eu entrar novamente para mexer, devo lembrar de comitar isso, foi uma correção para quando o usuario apenas aperte enter, com isso ele mantém o mesmo nome ja salvo e prossegue. Também devo aplicar nos outros campos
-                    if (string.IsNullOrWhiteSpace(alteracaoNome))
-                    {
-                        nomeFormat = dadosJson[indice].Nome ?? string.Empty;
-                    }
-                    else
-                    {
-                        nomeFormat = char.ToUpper(alteracaoNome[0]) + alteracaoNome.Substring(1).ToLower();
-                    }
+        Console.Clear();
+        Console.WriteLine($"Você selecionou: {dadosJson[indice].Nome} | {dadosJson[indice].Idade} | {dadosJson[indice].Email}");
 
-                    Console.Write("Idade: ");
-                    string alteracaoIdade = Console.ReadLine()!;
-                    int.TryParse(alteracaoIdade, out int idadeCast);
+        Console.Write("Nome (pressione Enter para manter): ");
+        string alteracaoNome = Console.ReadLine() ?? string.Empty;
+        string? nomeFormat = string.IsNullOrWhiteSpace(alteracaoNome)
+            ? dadosJson[indice].Nome
+            : CultureInfo.CurrentCulture.TextInfo.ToTitleCase(alteracaoNome.Trim().ToLower());
 
-                    if (string.IsNullOrWhiteSpace(alteracaoIdade))
-                    {
-                        idadeCast = dadosJson[indice].Idade;
-                    }
+        Console.Write("Idade (pressione Enter para manter): ");
+        string alteracaoIdade = Console.ReadLine()!;
+        int idadeCast;
+        if (string.IsNullOrWhiteSpace(alteracaoIdade))
+        {
+            idadeCast = dadosJson[indice].Idade;
+        }
+        else if (!int.TryParse(alteracaoIdade, out idadeCast))
+        {
+            Console.WriteLine("Idade inválida.");
+            return;
+        }
 
-                    Console.Write("Email: ");
-                    string alteracaoEmail = Console.ReadLine()!;
-                    var validacaoEmail = new EmailAddressAttribute();
+        Console.Write("Email (pressione Enter para manter): ");
+        string alteracaoEmail = Console.ReadLine()!;
+        if (string.IsNullOrWhiteSpace(alteracaoEmail))
+        {
+            alteracaoEmail = dadosJson[indice].Email ?? string.Empty;
+        }
+        var validacaoEmail = new EmailAddressAttribute();
 
-                    if (string.IsNullOrWhiteSpace(alteracaoNome) && string.IsNullOrWhiteSpace(alteracaoIdade) && string.IsNullOrWhiteSpace(alteracaoEmail))
-                    {
-                        Console.WriteLine("Nenhum campo foi alterado.");
-                        break;
-                    }
+        // Agrupando condições corretamente: exigir que NOME seja válido E a idade esteja no intervalo E o email seja válido
+        bool condNome = Regex.IsMatch(nomeFormat!, @"^[a-zA-ZÀ-ÿ\s]+$");
+        bool condIdade = idadeCast >= 1 && idadeCast <= 120;
+        bool condEmail = validacaoEmail.IsValid(alteracaoEmail);
 
-                    if (string.IsNullOrWhiteSpace(alteracaoEmail))
-                    {
-                        alteracaoEmail = dadosJson[indice].Email ?? string.Empty;
-                    }
+        if (condNome && condIdade && condEmail)
+        {
+            dadosJson[indice].Nome = nomeFormat;
+            dadosJson[indice].Idade = idadeCast;
+            dadosJson[indice].Email = alteracaoEmail;
+            dadosJson[indice].DataAlteracao = DateTime.Now;
 
+            string novoJson = JsonSerializer.Serialize(dadosJson, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(usuariosJson, novoJson);
 
-                    if (!string.IsNullOrWhiteSpace(nomeFormat) && nomeFormat.All(char.IsLetter) || idadeCast >= 1 && idadeCast <= 120 || validacaoEmail.IsValid(alteracaoEmail))
-                    {
-                        // altera os dados
-                        dadosJson[indice].Nome = nomeFormat;
-                        dadosJson[indice].Idade = idadeCast;
-                        dadosJson[indice].Email = alteracaoEmail;
-                        dadosJson[indice].DataAlteracao = DateTime.Now;
+            // atualizar a lista em memória passada como parâmetro
+            usuarios.Clear();
+            usuarios.AddRange(dadosJson);
 
-                        // salva a lista atualizada no usuarios.json
-                        string novoJson = JsonSerializer.Serialize(dadosJson, new JsonSerializerOptions { WriteIndented = true });
-                        File.WriteAllText(usuariosJson, novoJson);
-
-                        Console.WriteLine("✅ Nome alterado e salvo com sucesso!");
-                        validation = false;
-                    }
-                    else
-                    {
-                        Console.WriteLine("❌ Preencha os campos corretamente.");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("❌ Seleção inválida. Tente novamente");
-                }
-            }
-            else
-            {
-                Console.WriteLine("Nenhum usuário encontrado.");
-                validation = false;
-            }
+            Console.WriteLine("✅ Nome alterado e salvo com sucesso!");
+        }
+        else
+        {
+            Console.WriteLine("❌ Preencha os campos corretamente.");
         }
     }
 
